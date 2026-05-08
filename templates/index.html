@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SAFETIFY — Women Safety AI</title>
+  <style>
+    :root {
+      --bg:       #080810;
+      --card:     #10101e;
+      --border:   #1e1e38;
+      --purple:   #a855f7;
+      --purple2:  #7c3aed;
+      --danger:   #ef4444;
+      --safe:     #22c55e;
+      --text:     #e2e2f0;
+      --muted:    #6b6b90;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Segoe UI',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    /* ── NAV ── */
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 28px;
+      border-bottom:1px solid var(--border);
+      background:rgba(8,8,16,0.9);
+      position:sticky;top:0;z-index:100;
+      backdrop-filter:blur(8px);
+    }
+    .logo{font-size:1.3rem;font-weight:800;letter-spacing:2px;color:var(--purple)}
+    .logo span{color:#fff}
+    .nav-badge{
+      font-size:0.7rem;padding:4px 12px;border-radius:20px;
+      background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);
+      color:var(--purple);letter-spacing:1px;
+    }
+
+    /* ── LAYOUT ── */
+    .main{
+      display:grid;
+      grid-template-columns:340px 1fr;
+      gap:0;
+      height:calc(100vh - 57px);
+    }
+
+    /* ── LEFT PANEL — pipeline ── */
+    .pipeline{
+      border-right:1px solid var(--border);
+      padding:24px 20px;
+      overflow-y:auto;
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .pipeline-title{
+      font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;
+      color:var(--muted);margin-bottom:12px;
+    }
+
+    .step{
+      display:flex;align-items:flex-start;gap:12px;
+      padding:10px 12px;border-radius:10px;
+      transition:background 0.2s;
+      position:relative;
+    }
+    .step.active{background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2)}
+    .step.done  {background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15)}
+    .step.danger{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2)}
+    .step.idle  {background:transparent;border:1px solid transparent}
+
+    .step-num{
+      width:28px;height:28px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.75rem;font-weight:700;flex-shrink:0;
+      background:var(--border);color:var(--muted);
+      transition:all 0.3s;
+    }
+    .step.active .step-num{background:var(--purple2);color:#fff}
+    .step.done   .step-num{background:var(--safe);color:#fff}
+    .step.danger .step-num{background:var(--danger);color:#fff}
+
+    .step-info{flex:1}
+    .step-label{font-size:0.82rem;font-weight:600;color:var(--text)}
+    .step.idle   .step-label{color:var(--muted)}
+    .step-sub{font-size:0.72rem;color:var(--muted);margin-top:2px}
+    .step-sub.live{color:var(--purple);font-style:italic}
+    .step-sub.ok  {color:var(--safe)}
+    .step-sub.err {color:var(--danger)}
+
+    /* connector line */
+    .connector{
+      width:1px;height:14px;background:var(--border);
+      margin-left:25px;
+    }
+
+    /* branch */
+    .branch{
+      display:flex;gap:8px;margin:4px 0 4px 40px;
+    }
+    .branch-item{
+      flex:1;padding:8px 10px;border-radius:8px;font-size:0.75rem;font-weight:600;
+      text-align:center;border:1px solid transparent;opacity:0.4;transition:all 0.3s;
+    }
+    .branch-item.safe  {border-color:rgba(34,197,94,0.3);color:var(--safe)}
+    .branch-item.alert {border-color:rgba(239,68,68,0.3);color:var(--danger)}
+    .branch-item.safe.lit  {opacity:1;background:rgba(34,197,94,0.1)}
+    .branch-item.alert.lit {opacity:1;background:rgba(239,68,68,0.1)}
+
+    /* ── RIGHT PANEL — main UI ── */
+    .panel{
+      display:flex;flex-direction:column;
+      padding:28px 32px;
+      overflow-y:auto;
+      gap:22px;
+    }
+
+    /* mic area */
+    .mic-area{
+      display:flex;flex-direction:column;align-items:center;gap:16px;
+      padding:32px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+    }
+    #micBtn{
+      width:110px;height:110px;border-radius:50%;border:none;cursor:pointer;
+      background:#18183a;
+      display:flex;align-items:center;justify-content:center;
+      transition:all 0.25s;outline:none;position:relative;
+    }
+    #micBtn svg{width:48px;height:48px;fill:var(--purple);transition:fill 0.2s}
+    #micBtn.on{
+      background:var(--purple2);
+      box-shadow:0 0 0 12px rgba(168,85,247,0.15),0 0 0 26px rgba(168,85,247,0.06);
+      animation:pulse 1.4s infinite;
+    }
+    #micBtn.on svg{fill:#fff}
+    #micBtn.sos{
+      background:var(--danger);
+      box-shadow:0 0 0 14px rgba(239,68,68,0.2),0 0 0 28px rgba(239,68,68,0.08);
+      animation:pulse-red 0.8s infinite;
+    }
+    @keyframes pulse{
+      0%  {box-shadow:0 0 0 12px rgba(168,85,247,0.15),0 0 0 26px rgba(168,85,247,0.06)}
+      50% {box-shadow:0 0 0 18px rgba(168,85,247,0.1),0 0 0 36px rgba(168,85,247,0.03)}
+      100%{box-shadow:0 0 0 12px rgba(168,85,247,0.15),0 0 0 26px rgba(168,85,247,0.06)}
+    }
+    @keyframes pulse-red{
+      0%  {box-shadow:0 0 0 14px rgba(239,68,68,0.2),0 0 0 28px rgba(239,68,68,0.08)}
+      50% {box-shadow:0 0 0 22px rgba(239,68,68,0.15),0 0 0 40px rgba(239,68,68,0.04)}
+      100%{box-shadow:0 0 0 14px rgba(239,68,68,0.2),0 0 0 28px rgba(239,68,68,0.08)}
+    }
+    #micStatus{font-size:0.85rem;color:var(--muted);letter-spacing:0.5px}
+    #micStatus.active{color:var(--purple)}
+    #micStatus.sos{color:var(--danger);font-weight:600}
+
+    /* live score badge */
+    #liveBadge{
+      display:none;
+      align-items:center;gap:8px;
+      font-size:0.78rem;padding:5px 12px;border-radius:20px;
+      border:1px solid var(--border);background:#0c0c1a;color:var(--muted);
+      margin-top:4px;
+    }
+    #liveBadge.danger{border-color:rgba(239,68,68,0.4);color:var(--danger);background:rgba(239,68,68,0.07)}
+    #liveBadge.safe  {border-color:rgba(34,197,94,0.4);color:var(--safe);background:rgba(34,197,94,0.07)}
+    #liveDot{
+      width:7px;height:7px;border-radius:50%;background:currentColor;
+      animation:blink 1s infinite;
+    }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+    /* transcript */
+    .transcript-box{
+      background:#0c0c1a;border:1px solid var(--border);
+      border-radius:12px;padding:14px 16px;
+      font-size:1rem;min-height:52px;line-height:1.5;
+      color:#b0b0d0;word-break:break-word;
+    }
+    .transcript-box.interim{color:var(--muted);font-style:italic}
+
+    /* result card */
+    #resultCard{
+      border-radius:16px;padding:20px 24px;
+      display:none;align-items:center;gap:18px;
+    }
+    #resultCard.safe  {background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3)}
+    #resultCard.danger{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3)}
+    .rc-icon{font-size:2.2rem;line-height:1}
+    .rc-body{flex:1}
+    .rc-label{font-size:1.4rem;font-weight:800;letter-spacing:1px}
+    #resultCard.safe   .rc-label{color:var(--safe)}
+    #resultCard.danger .rc-label{color:var(--danger)}
+    .rc-phrase{font-size:0.8rem;color:var(--muted);margin-top:4px;word-break:break-word}
+    .rc-bar-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px}
+    .rc-pct{font-size:1.1rem;font-weight:700}
+    .bar-bg{width:90px;height:6px;background:var(--border);border-radius:4px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:4px;transition:width 0.5s ease}
+    #resultCard.safe   .bar-fill{background:var(--safe)}
+    #resultCard.danger .bar-fill{background:var(--danger)}
+
+    /* SOS panel */
+    #sosPanel{
+      display:none;
+      border-radius:16px;
+      border:1px solid rgba(239,68,68,0.4);
+      background:rgba(239,68,68,0.06);
+      overflow:hidden;
+    }
+    .sos-header{
+      background:rgba(239,68,68,0.15);
+      padding:14px 20px;
+      display:flex;align-items:center;gap:10px;
+    }
+    .sos-header-title{font-size:1rem;font-weight:700;color:#f87171;letter-spacing:1px}
+    .sos-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+
+    .info-row{display:flex;align-items:flex-start;gap:10px;font-size:0.85rem}
+    .info-label{color:var(--muted);min-width:90px;flex-shrink:0}
+    .info-val{color:var(--text);word-break:break-all}
+    .info-val a{color:#60a5fa;text-decoration:none}
+    .info-val a:hover{text-decoration:underline}
+
+    /* contacts */
+    .contacts-section{border-top:1px solid rgba(239,68,68,0.2);padding-top:14px}
+    .contacts-title{font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+    .contact-list{display:flex;flex-direction:column;gap:8px}
+    .contact-item{
+      display:flex;align-items:center;gap:10px;
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);border-radius:8px;
+      padding:10px 12px;
+    }
+    .contact-avatar{
+      width:32px;height:32px;border-radius:50%;
+      background:var(--purple2);
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;
+    }
+    .contact-name{font-size:0.85rem;font-weight:600;flex:1}
+    .contact-phone{font-size:0.78rem;color:var(--muted)}
+    .contact-status{font-size:0.72rem;padding:3px 8px;border-radius:10px;white-space:nowrap}
+    .contact-status.sending{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+    .contact-status.sent   {background:rgba(34,197,94,0.1);color:var(--safe);border:1px solid rgba(34,197,94,0.3)}
+    .contact-status.failed {background:rgba(239,68,68,0.1);color:var(--danger);border:1px solid rgba(239,68,68,0.3)}
+
+    /* add contact */
+    .add-contact{
+      display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;
+    }
+    .add-contact input{
+      flex:1;min-width:120px;background:#0c0c1a;border:1px solid var(--border);
+      border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.82rem;outline:none;
+    }
+    .add-contact input:focus{border-color:var(--purple2)}
+    .add-contact input::placeholder{color:#444}
+    .btn-add{
+      background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);
+      color:var(--purple);border-radius:8px;padding:9px 14px;
+      font-size:0.82rem;cursor:pointer;white-space:nowrap;
+    }
+    .btn-add:hover{background:rgba(168,85,247,0.25)}
+
+    /* manual input */
+    .manual-row{display:flex;gap:8px}
+    .manual-row input{
+      flex:1;background:#0c0c1a;border:1px solid var(--border);
+      border-radius:10px;padding:12px 14px;color:var(--text);font-size:0.9rem;outline:none;
+    }
+    .manual-row input:focus{border-color:var(--purple2)}
+    .manual-row input::placeholder{color:#444}
+    .btn-send{
+      background:var(--purple2);border:none;border-radius:10px;
+      padding:12px 20px;color:#fff;font-size:0.9rem;cursor:pointer;
+    }
+    .btn-send:hover{background:#6d28d9}
+
+    /* spinner */
+    .spinner{
+      width:20px;height:20px;border:2px solid #333;border-top-color:var(--purple);
+      border-radius:50%;animation:spin 0.7s linear infinite;display:none;margin:0 auto;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* history */
+    .history-list{display:flex;flex-direction:column;gap:8px}
+    .hist{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 14px;border-radius:10px;
+      background:#0c0c1a;border-left:4px solid transparent;font-size:0.83rem;
+    }
+    .hist.danger{border-left-color:var(--danger)}
+    .hist.safe  {border-left-color:var(--safe)}
+    .hist-badge{
+      font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;
+    }
+    .hist.danger .hist-badge{background:rgba(239,68,68,0.12);color:var(--danger)}
+    .hist.safe   .hist-badge{background:rgba(34,197,94,0.1);color:var(--safe)}
+    .hist-text{flex:1;color:#999}
+    .hist-conf{color:#555;font-size:0.76rem;white-space:nowrap}
+
+    .section-label{font-size:0.68rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px}
+
+    #noSupport{
+      display:none;background:rgba(251,191,36,0.08);
+      border:1px solid rgba(251,191,36,0.3);
+      border-radius:10px;padding:12px 16px;font-size:0.82rem;color:#fbbf24;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#2a2a45;border-radius:4px}
+
+    @media(max-width:700px){
+      .main{grid-template-columns:1fr;height:auto}
+      .pipeline{border-right:none;border-bottom:1px solid var(--border)}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">SAFE<span>TIFY</span></div>
+  <div class="nav-badge">AI POWERED</div>
+</nav>
+
+<div class="main">
+
+  <!-- ── LEFT: pipeline steps ── -->
+  <aside class="pipeline">
+    <div class="pipeline-title">Detection Pipeline</div>
+
+    <div class="step idle" id="s1">
+      <div class="step-num">1</div>
+      <div class="step-info">
+        <div class="step-label">Start SAFETIFY</div>
+        <div class="step-sub" id="s1-sub">Waiting…</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s2">
+      <div class="step-num">2</div>
+      <div class="step-info">
+        <div class="step-label">Collect Voice Input</div>
+        <div class="step-sub" id="s2-sub">Microphone idle</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s3">
+      <div class="step-num">3</div>
+      <div class="step-info">
+        <div class="step-label">Voice to Text</div>
+        <div class="step-sub" id="s3-sub">Web Speech API</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s4">
+      <div class="step-num">4</div>
+      <div class="step-info">
+        <div class="step-label">Text Preprocessing</div>
+        <div class="step-sub" id="s4-sub">Clean + tokenize</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s5">
+      <div class="step-num">5</div>
+      <div class="step-info">
+        <div class="step-label">Convert to Embeddings</div>
+        <div class="step-sub" id="s5-sub">Pad sequences</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s6">
+      <div class="step-num">6</div>
+      <div class="step-info">
+        <div class="step-label">Load Bi-LSTM Model</div>
+        <div class="step-sub" id="s6-sub">Bidirectional LSTM</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s7">
+      <div class="step-num">7</div>
+      <div class="step-info">
+        <div class="step-label">Predict Probability</div>
+        <div class="step-sub" id="s7-sub">Sigmoid output</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s8">
+      <div class="step-num">8</div>
+      <div class="step-info">
+        <div class="step-label">Prob &gt; Threshold?</div>
+        <div class="step-sub" id="s8-sub">Decision boundary</div>
+      </div>
+    </div>
+
+    <!-- branch -->
+    <div class="branch">
+      <div class="branch-item safe"  id="branchNo">✓ No Emergency</div>
+      <div class="branch-item alert" id="branchYes">⚠ Trigger SOS</div>
+    </div>
+    <div class="connector" style="margin-left:25px;height:8px"></div>
+
+    <div class="step idle" id="s9">
+      <div class="step-num">9</div>
+      <div class="step-info">
+        <div class="step-label">Capture GPS Location</div>
+        <div class="step-sub" id="s9-sub">Browser Geolocation</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="step idle" id="s10">
+      <div class="step-num">10</div>
+      <div class="step-info">
+        <div class="step-label">Send Emergency SMS</div>
+        <div class="step-sub" id="s10-sub">Twilio API</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── RIGHT: main UI ── -->
+  <div class="panel">
+
+    <!-- mic -->
+    <div class="mic-area">
+      <button id="micBtn" title="Click to pause/resume listening">
+        <svg viewBox="0 0 24 24"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm6.5 9a.5.5 0 0 1 .5.5A7 7 0 0 1 12.5 17.93V21h2a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h2v-3.07A7 7 0 0 1 5 10.5a.5.5 0 0 1 1 0 6 6 0 0 0 12 0 .5.5 0 0 1 .5-.5z"/></svg>
+      </button>
+      <div id="micStatus">Starting microphone…</div>
+      <div id="liveBadge"><span id="liveDot"></span><span id="liveTxt">—</span></div>
+    </div>
+
+    <div id="noSupport">
+      Your browser does not support the Web Speech API. Please use Chrome or Edge and type manually below.
+    </div>
+
+    <!-- transcript -->
+    <div>
+      <div class="section-label">Live Transcript</div>
+      <div class="transcript-box" id="transcript">—</div>
+    </div>
+
+    <!-- spinner -->
+    <div class="spinner" id="spinner"></div>
+
+    <!-- result -->
+    <div id="resultCard">
+      <div class="rc-icon" id="rcIcon"></div>
+      <div class="rc-body">
+        <div class="rc-label" id="rcLabel"></div>
+        <div class="rc-phrase" id="rcPhrase"></div>
+      </div>
+      <div class="rc-bar-wrap">
+        <div class="rc-pct" id="rcPct"></div>
+        <div class="bar-bg"><div class="bar-fill" id="rcBar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- SOS panel -->
+    <div id="sosPanel">
+      <div class="sos-header">
+        <span style="font-size:1.3rem"></span>
+        <div class="sos-header-title">SOS TRIGGERED AUTOMATICALLY</div>
+      </div>
+      <div class="sos-body">
+        <div class="info-row">
+          <div class="info-label">Phrase</div>
+          <div class="info-val" id="sosPhrase">—</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">GPS</div>
+          <div class="info-val" id="sosLocation">Acquiring…</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Accuracy</div>
+          <div class="info-val" id="sosAccuracy">—</div>
+        </div>
+        <div class="info-row" id="manualLocationRow" style="display:flex">
+          <div class="info-label">Manual Override</div>
+          <div class="info-val">
+            <input id="manualLat" type="number" step="0.000001" placeholder="Latitude (e.g., 11.0168)" style="width:120px;margin-right:5px"/>
+            <input id="manualLng" type="number" step="0.000001" placeholder="Longitude (e.g., 76.9558)" style="width:120px"/>
+            <button onclick="useManualLocation()" style="margin-left:5px;padding:2px 8px;font-size:0.7rem">Use Manual</button>
+          </div>
+        </div>
+
+        <div class="contacts-section">
+          <div class="contacts-title">Emergency Contacts — SMS Status</div>
+          <div class="contact-list" id="smsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- emergency contacts manager -->
+    <div>
+      <div class="section-label">Emergency Contacts</div>
+      <div class="contact-list" id="contactList">
+        <div style="font-size:0.82rem;color:var(--muted)">No contacts added yet.</div>
+      </div>
+      <div class="add-contact" style="margin-top:10px">
+        <input id="cName"  type="text"  placeholder="Name"/>
+        <input id="cPhone" type="tel"   placeholder="Phone (+91xxxxxxxxxx)"/>
+        <button class="btn-add" onclick="addContact()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- manual input -->
+    <div>
+      <div class="section-label">Or Type Manually</div>
+      <div class="manual-row">
+        <input id="textInput" type="text" placeholder="Type a phrase and press Enter…"/>
+        <button class="btn-send" onclick="sendText()">Send</button>
+      </div>
+    </div>
+
+    <!-- history -->
+    <div>
+      <div class="section-label">Recent Predictions</div>
+      <div class="history-list" id="histList">
+        <div style="font-size:0.82rem;color:var(--muted)">No predictions yet.</div>
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+</div><!-- /main -->
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let contacts = [];
+try { contacts = JSON.parse(localStorage.getItem("safetify_contacts") || "[]"); } catch(e) {}
+
+let recognition  = null;
+let isListening  = false;
+let autoRestart  = true;   // keep mic alive automatically
+let paused       = false;  // user manually paused
+let finalTranscript = "";
+let predicting   = false;  // prevent concurrent predict calls
+let sosFired     = false;  // prevent duplicate SOS for same phrase
+let lastDangerPhrase = ""; // debounce repeated danger triggers
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+// ── Elements ──────────────────────────────────────────────────────────────────
+const micBtn      = document.getElementById("micBtn");
+const micStatus   = document.getElementById("micStatus");
+const liveBadge   = document.getElementById("liveBadge");
+const liveTxt     = document.getElementById("liveTxt");
+const transcript  = document.getElementById("transcript");
+const spinner     = document.getElementById("spinner");
+const resultCard  = document.getElementById("resultCard");
+const rcIcon      = document.getElementById("rcIcon");
+const rcLabel     = document.getElementById("rcLabel");
+const rcPhrase    = document.getElementById("rcPhrase");
+const rcPct       = document.getElementById("rcPct");
+const rcBar       = document.getElementById("rcBar");
+const sosPanel    = document.getElementById("sosPanel");
+const textInput   = document.getElementById("textInput");
+const noSupport   = document.getElementById("noSupport");
+
+// ── Pipeline helpers ──────────────────────────────────────────────────────────
+function setStep(id, state, sub) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = "step " + state;
+  const subEl = document.getElementById(id + "-sub");
+  if (subEl && sub !== undefined) {
+    subEl.textContent = sub;
+    subEl.className = "step-sub" + (state === "active" ? " live" : state === "done" ? " ok" : state === "danger" ? " err" : "");
+  }
+}
+function resetPipeline() {
+  ["s1","s2","s3","s4","s5","s6","s7","s8","s9","s10"].forEach(id => setStep(id, "idle"));
+  document.getElementById("branchNo").classList.remove("lit");
+  document.getElementById("branchYes").classList.remove("lit");
+}
+function litBranch(danger) {
+  document.getElementById("branchNo").classList.toggle("lit", !danger);
+  document.getElementById("branchYes").classList.toggle("lit", danger);
+}
+
+// ── Contacts ──────────────────────────────────────────────────────────────────
+function saveContacts() {
+  try { localStorage.setItem("safetify_contacts", JSON.stringify(contacts)); } catch(e) {}
+}
+
+function renderContacts() {
+  const list = document.getElementById("contactList");
+  if (contacts.length === 0) {
+    list.innerHTML = `<div style="font-size:0.82rem;color:var(--muted)">No contacts added yet.</div>`;
+    return;
+  }
+  list.innerHTML = contacts.map((c, i) => `
+    <div class="contact-item">
+      <div class="contact-avatar">${c.name[0].toUpperCase()}</div>
+      <div style="flex:1">
+        <div class="contact-name">${esc(c.name)}</div>
+        <div class="contact-phone">${esc(c.phone)}</div>
+      </div>
+      <button onclick="removeContact(${i})" style="background:none;border:none;color:#555;cursor:pointer;font-size:1rem">✕</button>
+    </div>`).join("");
+}
+
+function addContact() {
+  const name  = document.getElementById("cName").value.trim();
+  const phone = document.getElementById("cPhone").value.trim();
+  if (!name || !phone) { alert("Enter both name and phone."); return; }
+  contacts.push({ name, phone });
+  saveContacts();
+  renderContacts();
+  document.getElementById("cName").value  = "";
+  document.getElementById("cPhone").value = "";
+}
+
+function removeContact(i) {
+  contacts.splice(i, 1);
+  saveContacts();
+  renderContacts();
+}
+
+// ── Speech Recognition ────────────────────────────────────────────────────────
+if (!SpeechRecognition) {
+  noSupport.style.display = "block";
+  micBtn.disabled = true; micBtn.style.opacity = "0.3";
+  micStatus.textContent = "Speech API not supported — use Chrome/Edge";
+} else {
+  recognition = new SpeechRecognition();
+  recognition.continuous     = true;
+  recognition.interimResults = true;
+  recognition.lang           = "en-US";
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add("on");
+    micBtn.classList.remove("sos");
+    micStatus.textContent = "Listening in real-time…";
+    micStatus.className   = "active";
+    transcript.classList.add("interim");
+    setStep("s1", "done", "Running");
+    setStep("s2", "active", "Microphone open…");
+    liveBadge.style.display = "flex";
+  };
+
+  recognition.onresult = async (e) => {
+    let interim = "";
+    let newFinal = "";
+
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        newFinal += e.results[i][0].transcript;
+      } else {
+        interim += e.results[i][0].transcript;
+      }
+    }
+
+    if (newFinal.trim()) {
+      finalTranscript += newFinal;
+    }
+
+    const full = (finalTranscript + interim).trim();
+    transcript.textContent = full || "—";
+    setStep("s2", "active", "Capturing speech…");
+    setStep("s3", "active", full ? `"${full.slice(0,40)}"` : "Transcribing…");
+
+    // Real-time prediction on each new final segment
+    if (newFinal.trim() && !predicting) {
+      await runPipeline(newFinal.trim(), /* realtime= */ true);
+    }
+  };
+
+  // Do NOT stop on speech-end — keep mic open for continuous listening
+  // recognition.onspeechend is intentionally omitted
+
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove("on");
+    transcript.classList.remove("interim");
+
+    if (autoRestart && !paused) {
+      // Seamlessly restart for continuous monitoring
+      setTimeout(() => {
+        if (!paused) {
+          try { recognition.start(); } catch(err) {}
+        }
+      }, 200);
+    } else {
+      micStatus.textContent = "Paused — click mic to resume";
+      micStatus.className   = "";
+      liveBadge.style.display = "none";
+    }
+  };
+
+  recognition.onerror = (e) => {
+    isListening = false;
+    micBtn.classList.remove("on");
+    // network/no-speech errors: auto-retry silently
+    if (["no-speech", "audio-capture", "network"].includes(e.error)) {
+      if (autoRestart && !paused) {
+        setTimeout(() => {
+          if (!paused) { try { recognition.start(); } catch(err) {} }
+        }, 500);
+      }
+      return;
+    }
+    micStatus.textContent = "Error: " + e.error + " — click mic to retry";
+    micStatus.className   = "";
+    liveBadge.style.display = "none";
+  };
+}
+
+// ── Mic button: pause / resume ────────────────────────────────────────────────
+micBtn.addEventListener("click", () => {
+  if (!recognition) return;
+  if (!paused) {
+    // Pause
+    paused       = true;
+    autoRestart  = false;
+    sosFired     = false;
+    if (isListening) recognition.stop();
+    micStatus.textContent = "Paused — click to resume";
+    micStatus.className   = "";
+    liveBadge.style.display = "none";
+  } else {
+    // Resume
+    paused      = false;
+    autoRestart = true;
+    finalTranscript = "";
+    sosFired    = false;
+    resetPipeline();
+    resultCard.style.display = "none";
+    sosPanel.style.display   = "none";
+    micStatus.textContent = "Starting…";
+    try { recognition.start(); } catch(err) {}
+  }
+});
+
+// ── Auto-start mic on page load ───────────────────────────────────────────────
+window.addEventListener("load", () => {
+  if (recognition) {
+    setTimeout(() => {
+      try { recognition.start(); } catch(err) {}
+    }, 600);
+  }
+});
+
+// ── Manual input ──────────────────────────────────────────────────────────────
+function sendText() {
+  const text = textInput.value.trim();
+  if (!text) return;
+  transcript.textContent = text;
+  textInput.value = "";
+  setStep("s1", "done", "Running");
+  setStep("s2", "done", "Manual input");
+  setStep("s3", "done", `"${text.slice(0,40)}"`);
+  runPipeline(text, false);
+}
+textInput.addEventListener("keydown", e => { if (e.key === "Enter") sendText(); });
+
+// ── Core pipeline ─────────────────────────────────────────────────────────────
+async function runPipeline(text, realtime) {
+  predicting = true;
+  if (!realtime) {
+    spinner.style.display = "block";
+    resultCard.style.display = "none";
+    sosPanel.style.display   = "none";
+  }
+
+  setStep("s4", "active", "Cleaning text…");
+  setStep("s5", "active", "Padding sequence…");
+  setStep("s6", "active", "Running Bi-LSTM…");
+
+  let data;
+  try {
+    const res = await fetch("/predict", {
+      method:  "POST",
+      headers: {"Content-Type":"application/json"},
+      body:    JSON.stringify({ text }),
+    });
+    data = await res.json();
+  } catch {
+    spinner.style.display = "none";
+    setStep("s6", "danger", "Server error");
+    predicting = false;
+    return;
+  }
+
+  spinner.style.display = "none";
+  predicting = false;
+
+  if (data.error) {
+    setStep("s6", "danger", data.error);
+    return;
+  }
+
+  const danger = isDanger(data);
+
+  // Update pipeline steps
+  setStep("s4", "done", "Cleaned & tokenized");
+  setStep("s5", "done", "Embeddings ready");
+  setStep("s6", "done", "Prediction complete");
+  setStep("s7", danger ? "danger" : "done", `Score: ${data.raw_score} | Threshold: ${data.threshold}`);
+  setStep("s8", danger ? "danger" : "done",
+          danger ? "YES — above threshold" : "NO — below threshold");
+  litBranch(danger);
+
+  // Live badge (always visible while mic is on)
+  liveBadge.className  = "danger" + (danger ? "" : " safe").trim();
+  liveBadge.className  = danger ? "danger" : "safe";
+  liveTxt.textContent  = `${data.label} — ${data.confidence}% — "${text.slice(0,30)}"`;
+  liveBadge.style.display = "flex";
+
+  showResult(data);
+  addHistory(data);
+
+  if (danger) {
+    micBtn.classList.add("sos");
+    micStatus.textContent = "DANGER DETECTED — SOS triggered";
+    micStatus.className   = "sos";
+
+    // Prevent duplicate SOS for very similar phrases
+    if (!sosFired || lastDangerPhrase !== text) {
+      sosFired = true;
+      lastDangerPhrase = text;
+      triggerSOS(text);
+    }
+
+    setTimeout(() => {
+      micBtn.classList.remove("sos");
+      if (!paused) {
+        micStatus.textContent = "Listening in real-time…";
+        micStatus.className   = "active";
+      }
+    }, 8000);
+  }
+}
+
+function isDanger(data) { return data.label === "DANGER"; }
+
+// ── Show result card ──────────────────────────────────────────────────────────
+function showResult(data) {
+  const d = isDanger(data);
+  resultCard.className     = d ? "danger" : "safe";
+  resultCard.style.display = "flex";
+  rcIcon.textContent       = d ? "⚠️" : "✅";
+  rcLabel.textContent      = data.label;
+  rcPhrase.textContent     = `"${data.text}"`;
+  rcPct.textContent        = data.confidence + "%";
+  rcBar.style.width        = data.confidence + "%";
+}
+
+// ── SOS flow ──────────────────────────────────────────────────────────────────
+async function triggerSOS(phrase) {
+  let lat = null, lng = null, accuracy = null; // Declare here for useManualLocation access
+
+  sosPanel.style.display = "block";
+  document.getElementById("sosPhrase").textContent   = `"${phrase}"`;
+  document.getElementById("sosLocation").textContent = "Acquiring GPS…";
+  document.getElementById("sosAccuracy").textContent = "—";
+  setStep("s9", "active", "Requesting GPS…");
+
+  try {
+    const pos = await getLocation();
+    lat      = pos.coords.latitude;
+    lng      = pos.coords.longitude;
+    accuracy = pos.coords.accuracy;
+    const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+    document.getElementById("sosLocation").innerHTML =
+      `<a href="${mapsUrl}" target="_blank">${lat.toFixed(6)}, ${lng.toFixed(6)}</a>`;
+    document.getElementById("sosAccuracy").textContent = `±${Math.round(accuracy)} metres`;
+    setStep("s9", "done", `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    // Always show manual override option
+    document.getElementById("manualLocationRow").style.display = "flex";
+  } catch (e) {
+    document.getElementById("sosLocation").textContent = "GPS unavailable — " + e.message;
+    setStep("s9", "danger", "GPS unavailable");
+    // Show manual location input
+    document.getElementById("manualLocationRow").style.display = "flex";
+  }
+
+  const smsList = document.getElementById("smsList");
+
+  // Re-read contacts from localStorage in case they were added this session
+  try { contacts = JSON.parse(localStorage.getItem("safetify_contacts") || "[]"); } catch(e) {}
+
+  // Always call /send-sos — server will fall back to .env contacts if UI list is empty
+  setStep("s10", "active", "Sending SMS…");
+
+  if (contacts.length > 0) {
+    smsList.innerHTML = contacts.map((c, i) => `
+      <div class="contact-item" id="sms-${i}">
+        <div class="contact-avatar">${c.name[0].toUpperCase()}</div>
+        <div style="flex:1">
+          <div class="contact-name">${esc(c.name)}</div>
+          <div class="contact-phone">${esc(c.phone)}</div>
+        </div>
+        <div class="contact-status sending" id="sms-status-${i}">Sending…</div>
+      </div>`).join("");
+  } else {
+    smsList.innerHTML = `<div style="font-size:0.82rem;color:var(--muted)">Using contacts from server .env…</div>`;
+  }
+
+  try {
+    const res = await fetch("/send-sos", {
+      method:  "POST",
+      headers: {"Content-Type":"application/json"},
+      // send contacts array (may be empty — server uses .env as fallback)
+      body:    JSON.stringify({ latitude: lat, longitude: lng, accuracy, phrase, contacts }),
+    });
+    const result = await res.json();
+
+    if (!result.success && result.error === "No emergency contacts configured") {
+      smsList.innerHTML = `<div style="font-size:0.82rem;color:var(--danger);font-weight:600">
+        No contacts in UI or .env — add contacts to send SMS.</div>`;
+      setStep("s10", "danger", "No contacts configured");
+      return;
+    }
+
+    // Render server-resolved contacts if UI list was empty
+    if (contacts.length === 0 && result.details) {
+      smsList.innerHTML = result.details.map((d, i) => `
+        <div class="contact-item" id="sms-${i}">
+          <div class="contact-avatar">${(d.name || "?")[0].toUpperCase()}</div>
+          <div style="flex:1">
+            <div class="contact-name">${esc(d.name || "Contact")}</div>
+            <div class="contact-phone">${esc(d.to || "")}</div>
+          </div>
+          <div class="contact-status sending" id="sms-status-${i}">Sending…</div>
+        </div>`).join("");
+    }
+
+    result.details.forEach((d, i) => {
+      const el = document.getElementById(`sms-status-${i}`);
+      if (el) {
+        el.textContent = d.success ? (result.dev_mode ? "Simulated ✓" : "Sent ✓") : "Failed ✗";
+        el.className   = "contact-status " + (d.success ? "sent" : "failed");
+      }
+    });
+
+    const allOk = result.details.every(d => d.success);
+    setStep("s10", allOk ? "done" : "danger",
+      result.dev_mode ? "Dev mode — add Twilio credentials" :
+      allOk ? "All SMS sent!" : "Some SMS failed");
+  } catch {
+    setStep("s10", "danger", "SMS request failed");
+    contacts.forEach((_, i) => {
+      const el = document.getElementById(`sms-status-${i}`);
+      if (el) { el.textContent = "Failed ✗"; el.className = "contact-status failed"; }
+    });
+  }
+}
+
+// ── Geolocation ───────────────────────────────────────────────────────────────
+function getLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new Error("Geolocation not supported")); return; }
+    navigator.geolocation.getCurrentPosition(resolve, reject,
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+  });
+}
+
+function useManualLocation() {
+  const manualLat = parseFloat(document.getElementById("manualLat").value);
+  const manualLng = parseFloat(document.getElementById("manualLng").value);
+  if (isNaN(manualLat) || isNaN(manualLng)) {
+    alert("Please enter valid latitude and longitude.");
+    return;
+  }
+  lat = manualLat;
+  lng = manualLng;
+  accuracy = 0; // Manual, assume accurate
+  const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+  document.getElementById("sosLocation").innerHTML =
+    `<a href="${mapsUrl}" target="_blank">${lat.toFixed(6)}, ${lng.toFixed(6)} (Manual)</a>`;
+  document.getElementById("sosAccuracy").textContent = "Manual entry";
+  setStep("s9", "done", `${lat.toFixed(4)}, ${lng.toFixed(4)} (Manual)`);
+  document.getElementById("manualLocationRow").style.display = "none";
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+function addHistory(data) {
+  const list = document.getElementById("histList");
+  const placeholder = list.querySelector("div[style]");
+  if (placeholder) placeholder.remove();
+  const d = isDanger(data);
+  const item = document.createElement("div");
+  item.className = "hist " + (d ? "danger" : "safe");
+  item.innerHTML = `
+    <span class="hist-badge">${data.label}</span>
+    <span class="hist-text">${esc(data.text)}</span>
+    <span class="hist-conf">${data.confidence}%</span>`;
+  list.insertBefore(item, list.firstChild);
+  while (list.children.length > 8) list.removeChild(list.lastChild);
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderContacts();
+</script>
+</body>
+</html>
