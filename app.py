@@ -168,7 +168,7 @@ def send_sos():
 def health():
     return jsonify({"status": "ok", "model_loaded": model is not None})
 
- load_artifacts()
+load_artifacts()
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
