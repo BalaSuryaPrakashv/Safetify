@@ -138,8 +138,8 @@ def send_sos():
     from twilio.rest import Client
     client = Client(account_sid, auth_token)
 
-    SMS_FROM = "+16056003127"
-    SMS_TO   = "+916382268580"
+    SMS_FROM ="+16562680832"
+    SMS_TO   ="+916382268580"
 
     try:
         msg = client.messages.create(
@@ -168,8 +168,9 @@ def send_sos():
 def health():
     return jsonify({"status": "ok", "model_loaded": model is not None})
 
+ load_artifacts()
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    load_artifacts()
+   
     app.run(debug=False, host="0.0.0.0", port=5000)
