@@ -11,7 +11,7 @@ load_dotenv()
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 from preprocess import Preprocessor
 
-MODEL_PATH     = "models/bilstm_model.h5"
+MODEL_PATH     = "models/bilstm_model.keras"
 TOKENIZER_PATH = "tokenizer/tokenizer.pkl"
 
 app = Flask(__name__)
