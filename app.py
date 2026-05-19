@@ -98,10 +98,8 @@ def send_sos():
             for p in env_phones.split(",") if p.strip()
         ]
 
-    # ── Hardcoded fallback — always send to this number ──
     if not contacts:
-        contacts = [{"name": "Emergency", "phone": "+916382268580"}]
-        print("[FALLBACK] Using hardcoded emergency contact.")
+        return jsonify({"success": False, "error": "No emergency contacts configured"}), 400
 
     # Build Google Maps link
     if lat and lng:
@@ -120,20 +118,13 @@ def send_sos():
 
     account_sid = os.getenv("TWILIO_ACCOUNT_SID")
     auth_token  = os.getenv("TWILIO_AUTH_TOKEN")
-    SMS_FROM    = os.getenv("TWILIO_PHONE_NUMBER", "+17756551938")
 
     results = []
 
     # Dev mode — no credentials
     if not (account_sid and auth_token):
         print("[DEV MODE] Simulating SMS — no Twilio credentials found.")
-        for contact in contacts:
-            results.append({
-                "to": contact["phone"],
-                "name": contact["name"],
-                "success": True,
-                "sid": "dev-mode"
-            })
+        results.append({"to": "+916382268580", "name": "Emergency Contact", "success": True, "sid": "dev-mode"})
         return jsonify({
             "success":  True,
             "dev_mode": True,
@@ -147,19 +138,20 @@ def send_sos():
     from twilio.rest import Client
     client = Client(account_sid, auth_token)
 
-    for contact in contacts:
-        SMS_TO = contact["phone"]
-        try:
-            msg = client.messages.create(
-                body=message,
-                from_=SMS_FROM,
-                to=SMS_TO,
-            )
-            results.append({"to": SMS_TO, "name": contact["name"], "success": True, "sid": msg.sid})
-            print(f"SMS sent to {SMS_TO} — SID: {msg.sid}")
-        except Exception as e:
-            results.append({"to": SMS_TO, "name": contact["name"], "success": False, "error": str(e)})
-            print(f"Failed to send SMS to {SMS_TO}: {e}")
+    SMS_FROM = "+17756551938"
+    SMS_TO   = "+916382268580"
+
+    try:
+        msg = client.messages.create(
+            body=message,
+            from_=SMS_FROM,
+            to=SMS_TO,
+        )
+        results.append({"to": SMS_TO, "name": "Emergency Contact", "success": True, "sid": msg.sid})
+        print(f"SMS sent to {SMS_TO} — SID: {msg.sid}")
+    except Exception as e:
+        results.append({"to": SMS_TO, "name": "Emergency Contact", "success": False, "error": str(e)})
+        print(f"Failed to send SMS to {SMS_TO}: {e}")
 
     any_ok = any(r["success"] for r in results)
     return jsonify({
@@ -176,8 +168,8 @@ def send_sos():
 def health():
     return jsonify({"status": "ok", "model_loaded": model is not None})
 
+load_artifacts()    
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    load_artifacts()
     app.run(debug=False, host="0.0.0.0", port=5000)
